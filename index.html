@@ -78,6 +78,9 @@
 
       const [calculatedDaysPerPixel, setCalculatedDaysPerPixel] = useState(40);
       const [calculatedTimelineWidth, setCalculatedTimelineWidth] = useState(3000);
+      // Novo estado para a posição da linha da data atual
+      const [todayLinePosition, setTodayLinePosition] = useState(0);
+
 
       // Original project data with tasks, copied from teste.html
       const originalProjectsData = [
@@ -159,7 +162,7 @@
             { id: 'rac-bi-doc', name: '[BI] Marcação Documentação', duration: 2, status: 'Não Iniciado', predecessors: ['rac-ux-spec'] },
             { id: 'rac-qa-planejamento', name: '[QA] Planejamento Modelagem', duration: 2, status: 'Não Iniciado', predecessors: ['rac-bi-doc'] },
             { id: 'rac-dev', name: '[DEV] Desenvolvimento de Fluxo', duration: 2, status: 'Não Iniciado', predecessors: ['rac-qa-planejamento'] },
-            { id: 'rac-qa-execucao', name: '[QA] Execução de Testes', duration: 2, status: 'Não Iniciado', predecessors: ['rac-dev'] },
+            { id: 'rac-qa-execucao', duration: 2, status: 'Não Iniciado', predecessors: ['rac-dev'] },
             { id: 'rac-po-certificacao', duration: 1, status: 'Não Iniciado', predecessors: ['rac-qa-execucao'] },
             { id: 'rac-gmud', duration: 1, status: 'Não Iniciado', predecessors: ['rac-po-certificacao'] },
           ],
@@ -317,7 +320,7 @@
         setProjects(calculatedProjects);
       }, [calculatedDaysPerPixel]);
 
-      // Effect to calculate project positions on the timeline
+      // Effect to calculate project positions on the timeline and today's line position
       useEffect(() => {
         const positions = {};
         projects.forEach(project => {
@@ -331,6 +334,21 @@
           }
         });
         setProjectPositions(positions);
+
+        // Lógica para a linha da data atual
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        // Certifique-se de que a data atual não está antes da data de início da timeline
+        if (today >= timelineStartDateBotSac) {
+            const businessDaysSinceStart = getBusinessDays(timelineStartDateBotSac, today);
+            // A posição é calculada a partir do início da área da timeline
+            const position = (businessDaysSinceStart - 1) * calculatedDaysPerPixel;
+            setTodayLinePosition(position);
+        } else {
+            setTodayLinePosition(0); // Se a data atual for antes do início, a linha não aparece ou fica no início
+        }
+
       }, [projects, calculatedDaysPerPixel]);
 
       // Function to determine project color based on progress
@@ -393,35 +411,37 @@
         const months = {};
         let currentDate = new Date(timelineStartDateBotSac);
         currentDate.setHours(0,0,0,0);
-
+        
         while(currentDate <= timelineEndDateHardLimit) {
-          if (currentDate.getDay() === 1) { // Mark every Monday
-            const monthName = currentDate.toLocaleString('pt-BR', { month: 'long' });
-            const year = currentDate.getFullYear();
-            const monthKey = `${monthName}-${year}`;
+          const monthKey = `${currentDate.getFullYear()}-${currentDate.getMonth()}`;
+          
+          if (!months[monthKey]) {
+            // Se for o primeiro dia do mês ou o primeiro mês da timeline
+            // Calcula o índice do mês (0-based) para determinar par/ímpar
+            const currentMonthNumber = currentDate.getMonth(); // 0 = Jan, 1 = Feb, etc.
+            const isEvenMonth = (currentMonthNumber % 2 === 0);
 
-            if (!months[monthKey]) {
-              months[monthKey] = {
-                name: monthName.charAt(0).toUpperCase() + monthName.slice(1),
-                days: [],
-                startPx: -1,
-                endPx: -1,
-              };
-            }
+            months[monthKey] = {
+              name: currentDate.toLocaleString('pt-BR', { month: 'long' }).charAt(0).toUpperCase() + currentDate.toLocaleString('pt-BR', { month: 'long' }).slice(1),
+              days: [],
+              startPx: (getBusinessDays(timelineStartDateBotSac, currentDate) - 1) * calculatedDaysPerPixel,
+              endPx: -1, // Será atualizado enquanto iteramos pelos dias do mês
+              isEven: isEvenMonth,
+            };
+          }
+
+          if (currentDate.getDay() === 1) { // Mark every Monday
             const dayPosition = (getBusinessDays(timelineStartDateBotSac, currentDate) - 1) * calculatedDaysPerPixel;
             months[monthKey].days.push({
               date: new Date(currentDate),
               dayOfMonth: currentDate.getDate(),
               position: dayPosition,
             });
-
-            if (months[monthKey].startPx === -1 || dayPosition < months[monthKey].startPx) {
-              months[monthKey].startPx = dayPosition;
-            }
-            if (dayPosition > months[monthKey].endPx) {
-              months[monthKey].endPx = dayPosition;
-            }
           }
+          
+          // Atualiza o endPx para o último dia útil do mês
+          months[monthKey].endPx = (getBusinessDays(timelineStartDateBotSac, currentDate) - 1) * calculatedDaysPerPixel;
+
           currentDate.setDate(currentDate.getDate() + 1);
         }
         return Object.values(months);
@@ -431,29 +451,46 @@
 
       return (
         <div className="bg-gray-50 flex items-center justify-center p-8 min-h-screen">
-          <div className="bg-white p-8 rounded-2xl shadow-xl w-full">
-            <h1 className="text-3xl font-bold text-center text-gray-800 mb-6">Plano de Ação de Retenção</h1>
-            
-            {/* Color legend */}
-            <div className="flex justify-end space-x-4 mb-4">
-              <div className="flex items-center">
-                <div className="w-4 h-4 rounded-full bg-green-500 mr-2"></div>
-                <span className="text-sm text-gray-600">Concluída (100%)</span>
-              </div>
-              <div className="flex items-center">
-                <div className="w-4 h-4 rounded-full bg-blue-500 mr-2"></div>
-                <span className="text-sm text-gray-600">Em Andamento (50%)</span>
-              </div>
-              <div className="flex items-center">
-                <div className="w-4 h-4 rounded-full bg-gray-400 mr-2"></div>
-                <span className="text-sm text-gray-600">Não Iniciado (0%)</span>
+          <div className="bg-white pt-[17px] px-8 pb-8 rounded-2xl shadow-xl w-full">
+            {/* Novo contêiner para o título e a legenda */}
+            <div className="flex justify-between items-center mb-[29px]"> {/* Ajustado mb-[29px] */}
+              <h1 className="text-3xl font-bold text-gray-800" style={{ marginLeft: `${projectLabelWidth}px` }}>Plano de Ação de Retenção</h1>
+              
+              {/* Color legend */}
+              <div className="flex space-x-4">
+                <div className="flex items-center">
+                  <div className="w-4 h-4 rounded-full bg-green-500 mr-2"></div>
+                  <span className="text-sm text-gray-600">Concluída (100%)</span>
+                </div>
+                <div className="flex items-center">
+                  <div className="w-4 h-4 rounded-full bg-blue-500 mr-2"></div>
+                  <span className="text-sm text-gray-600">Em Andamento (50%)</span>
+                </div>
+                <div className="flex items-center">
+                  <div className="w-4 h-4 rounded-full bg-gray-400 mr-2"></div>
+                  <span className="text-sm text-gray-600">Não Iniciado (0%)</span>
+                </div>
               </div>
             </div>
 
             {/* Timeline and projects container */}
             <div className="relative pb-6" style={{ width: `${calculatedTimelineWidth + projectLabelWidth + paddingRight}px` }}>
+              {/* Background columns for months */}
+              <div className="absolute top-0 bottom-0 left-0 right-0 z-0" style={{ marginLeft: `${projectLabelWidth}px` }}>
+                {timelineMonths.map((month, index) => (
+                  <div
+                    key={`month-bg-${index}`}
+                    className={`absolute top-0 bottom-0 ${month.isEven ? 'bg-white' : 'bg-gray-100'}`}
+                    style={{
+                      left: `${month.startPx}px`,
+                      width: `${month.endPx - month.startPx + calculatedDaysPerPixel}px`,
+                    }}
+                  ></div>
+                ))}
+              </div>
+
               {/* X-axis: Months and Days */}
-              <div className="flex flex-col mb-4 ml-[64px] relative" style={{ width: `${calculatedTimelineWidth}px` }}>
+              <div className="flex flex-col mb-4 relative z-10" style={{ marginLeft: `${projectLabelWidth}px`, width: `${calculatedTimelineWidth}px` }}>
                 {/* Month Headers */}
                 <div className="flex relative h-8">
                   {timelineMonths.map((month, index) => (
@@ -489,6 +526,21 @@
                 </div>
               </div>
 
+              {/* Linha da data atual */}
+              {todayLinePosition > 0 && (
+                <div
+                    className="absolute top-0 bottom-0 z-50 pointer-events-none"
+                    style={{ left: `${todayLinePosition + projectLabelWidth}px` }}
+                >
+                    {/* Linha ajustada para começar no topo do círculo e esticar */}
+                    <div className="absolute w-0.5 bg-red-500" style={{ top: '-30px', height: 'calc(100% + 30px)', left: '-1px' }}></div>
+                    {/* Círculo ajustado para alinhar com o centro da linha e tocar nela */}
+                    <div className="absolute" style={{ top: '-30px', left: '-8px' }}>
+                        <div className="w-4 h-4 rounded-full bg-red-500"></div>
+                    </div>
+                </div>
+              )}
+
               {/* Project rendering */}
               {projects.map(project => {
                 const { left, width, startDate, endDate } = projectPositions[project.id] || {};
@@ -496,7 +548,7 @@
                 const progressColor = getProjectColor(project.progress);
                 
                 return (
-                  <div key={project.id} className="flex items-center mb-6">
+                  <div key={project.id} className="flex items-center mb-6 relative z-20"> {/* Adicionado z-20 para garantir que os projetos fiquem acima do fundo */}
                     <div className="w-16 flex-shrink-0 text-sm font-semibold text-gray-700" style={{ width: `${projectLabelWidth}px` }}>{project.name}</div>
                     <div className="relative h-16" style={{ width: `${calculatedTimelineWidth}px` }}>
                       <div
@@ -560,4 +612,3 @@
   </script>
 </body>
 </html>
-
