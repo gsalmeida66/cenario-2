@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Plano de Ação de Retenção</title>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f7f9fc;
+      overflow: hidden;
+    }
+    ::-webkit-scrollbar {
+      display: none;
+    }
+    body {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    // Função auxiliar para calcular o número de dias úteis entre duas datas
+    const getBusinessDays = (startDate, endDate) => {
+      let count = 0;
+      const currentDate = new Date(startDate);
+      currentDate.setHours(0, 0, 0, 0);
+      const end = new Date(endDate);
+      end.setHours(0, 0, 0, 0);
+
+      while (currentDate <= end) {
+        const dayOfWeek = currentDate.getDay();
+        if (dayOfWeek !== 0 && dayOfWeek !== 6) { // 0 = Domingo, 6 = Sábado
+          count++;
+        }
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+      return count;
+    };
+
+    // Helper function to add business days to a date
+    const addBusinessDays = (date, days) => {
+      const result = new Date(date);
+      result.setHours(0, 0, 0, 0); // Normalize to start of day
+      let addedDays = 0;
+      while (addedDays < days) {
+        result.setDate(result.getDate() + 1);
+        if (result.getDay() !== 0 && result.getDay() !== 6) {
+          addedDays++;
+        }
+      }
+      return result;
+    };
+
+    // Função auxiliar para formatar a data
+    const formatDate = (date) => {
+      if (!date) return '';
+      const d = new Date(date);
+      const options = { month: 'short', day: 'numeric' };
+      return d.toLocaleDateString('pt-BR', options);
+    };
+
+    const App = () => {
+      const timelineStartDateBotSac = new Date('2025-06-09T00:00:00');
+      const timelineEndDateHardLimit = new Date('2025-11-17T23:59:59');
+      const projectLabelWidth = 120;
+      const paddingRight = 50;
+
+      const [calculatedDaysPerPixel, setCalculatedDaysPerPixel] = useState(40);
+      const [calculatedTimelineWidth, setCalculatedTimelineWidth] = useState(3000);
+
+      // Dados originais dos projetos com tarefas, copiados de teste.html
+      const originalProjectsData = [
+        {
+          id: 'bot_sac',
+          name: '[BOT SAC] Menu ACOA',
+          tasks: [
+            { id: 'consolidated_bot_sac', name: 'BOT SAC (Menu ACOA)', duration: getBusinessDays(new Date('2025-06-13T00:00:00'), new Date('2025-08-12T00:00:00')), status: 'Em Andamento', predecessors: [], startDate: new Date('2025-06-13T00:00:00') },
+          ],
+          progress: 91, // Progresso atualizado
+        },
+        {
+          id: 'bot_cpa',
+          name: '[Bot CPA]',
+          tasks: [
+            { id: 'hld-cpa', name: 'HLD', duration: 2, status: 'Concluída', predecessors: [], startDate: new Date('2025-07-28T00:00:00') },
+            { id: 'aprovacao-hld-cpa', name: '[Movida] Aprovação HLD', duration: 4, status: 'Concluída', predecessors: ['hld-cpa'] },
+            { id: 'cpa-1', name: 'Escopo', duration: 2, status: 'Não Iniciado', predecessors: ['aprovacao-hld-cpa'] },
+            { id: 'cpa-3', name: 'UX - SD', duration: 2, status: 'Não Iniciado', predecessors: ['cpa-1'] },
+            { id: 'cpa-4', name: 'Movida - Aprovação SD', duration: 2, status: 'Não Iniciado', predecessors: ['cpa-3'] },
+            { id: 'cpa-2', name: 'UX - Spec', duration: 2, status: 'Não Iniciado', predecessors: ['cpa-4'] },
+            { id: 'cpa-5', name: 'BI - Marcação Documentação', duration: 2, status: 'Não Iniciado', predecessors: ['cpa-2'] },
+            { id: 'cpa-7', name: 'QA - Planejamento Modelagem', duration: 2, status: 'Não Iniciado', predecessors: ['cpa-5'] },
+            { id: 'cpa-6', name: 'DEV - Desenvolvimento de Fluxo', duration: 2, status: 'Não Iniciado', predecessors: ['cpa-7'] },
+            { id: 'cpa-8', name: 'QA - Execução de Testes', duration: 2, status: 'Não Iniciado', predecessors: ['cpa-6'] },
+            { id: 'cpa-9', name: 'PO - Certificação', duration: 1, status: 'Não Iniciado', predecessors: ['cpa-8'] },
+            { id: 'cpa-10', name: 'GMUD', duration: 1, status: 'Não Iniciado', predecessors: ['cpa-9'] },
+          ],
+          progress: 10, // Progresso atualizado
+        },
+        {
+          id: 'ura_reservas',
+          name: '[URA Reservas] Info Loja + ACOA',
+          tasks: [
+            { id: 'hld-ura', name: 'HLD', duration: 2, status: 'Não Iniciado', predecessors: ['bot_cpa:cpa-2'] },
+            { id: 'aprovacao-hld-ura', name: '[Movida] Aprovação HLD', duration: 4, status: 'Não Iniciado', predecessors: ['hld-ura'] },
+            { id: '183', name: 'Escopo', duration: 2, status: 'Não Iniciado', predecessors: ['aprovacao-hld-ura'] },
+            { id: '184', name: 'UX - SD', duration: 2, status: 'Não Iniciado', predecessors: ['183'] },
+            { id: '185', name: 'Movida - Aprovação SD', duration: 2, status: 'Não Iniciado', predecessors: ['184'] },
+            { id: '186', name: 'UX - Spec', duration: 2, status: 'Não Iniciado', predecessors: ['185'] },
+            { id: '187', name: 'BI - Marcação Documentação', duration: 2, status: 'Não Iniciado', predecessors: ['186'] },
+            { id: '188', name: 'QA - Planejamento Modelagem', duration: 2, status: 'Não Iniciado', predecessors: ['187'] },
+            { id: '189', name: 'DEV - Desenvolvimento de Fluxo', duration: 2, status: 'Não Iniciado', predecessors: ['188'] },
+            { id: '190', name: 'QA - Execução de Testes', duration: 2, status: 'Não Iniciado', predecessors: ['189'] },
+            { id: '191', name: 'PO - Certificação', duration: 1, status: 'Não Iniciado', predecessors: ['190'] },
+            { id: '192', name: 'GMUD', duration: 1, status: 'Não Iniciado', predecessors: ['191'] },
+          ],
+          progress: 10, // Progresso atualizado
+        },
+        {
+          id: 'ura_nova_reserva',
+          name: '[URA Reservas] Automação Nova Reserva',
+          tasks: [
+            { id: 'hld-e2', name: 'HLD', duration: 2, status: 'Não Iniciado', predecessors: ['ura_reservas:186'] },
+            { id: 'aprovacao-hld-e2', name: '[Movida] Aprovação HLD', duration: 4, status: 'Não Iniciado', predecessors: ['hld-e2'] },
+            { id: 'e2-1', name: 'Escopo', duration: 2, status: 'Não Iniciado', predecessors: ['aprovacao-hld-e2'] },
+            { id: 'e2-3', name: 'UX - SD', duration: 2, status: 'Não Iniciado', predecessors: ['e2-1'] },
+            { id: 'e2-4', name: '[Movida] Aprovação SD', duration: 2, status: 'Não Iniciado', predecessors: ['e2-3'] },
+            { id: 'e2-2', name: 'UX - Spec', duration: 2, status: 'Não Iniciado', predecessors: ['e2-4'] },
+            { id: 'e2-5', name: 'BI - Marcação Documentação', duration: 2, status: 'Não Iniciado', predecessors: ['e2-2'] },
+            { id: 'e2-7', name: '[QA] Planejamento Modelagem', duration: 2, status: 'Não Iniciado', predecessors: ['e2-5'] },
+            { id: 'e2-6', name: '[DEV] Desenvolvimento de Fluxo', duration: 2, status: 'Não Iniciado', predecessors: ['e2-7'] },
+            { id: 'e2-8', name: '[QA] Execução de Testes', duration: 2, status: 'Não Iniciado', predecessors: ['e2-6'] },
+            { id: 'e2-9', name: '[PO] Certificação', duration: 1, status: 'Não Iniciado', predecessors: ['e2-8'] },
+            { id: 'e2-10', name: 'GMUD', duration: 1, status: 'Não Iniciado', predecessors: ['e2-9'] },
+          ],
+          progress: 10, // Progresso atualizado
+        },
+        {
+          id: 'bot_rac',
+          name: '[BOT RAC] Assistência 24h + Manutenção',
+          tasks: [
+            { id: 'rac-hld', name: 'HLD', duration: 2, status: 'Não Iniciado', predecessors: ['ura_nova_reserva:e2-2'] },
+            { id: 'rac-aprovacao-hld', name: '[Movida] Aprovação HLD', duration: 4, status: 'Não Iniciado', predecessors: ['rac-hld'] },
+            { id: 'rac-escopo', duration: 2, status: 'Não Iniciado', predecessors: ['rac-aprovacao-hld'] },
+            { id: 'rac-ux-sd', name: '[UX] SD', duration: 2, status: 'Não Iniciado', predecessors: ['rac-escopo'] },
+            { id: 'rac-movida-aprovacao-sd', name: '[Movida] Aprovação SD', duration: 2, status: 'Não Iniciado', predecessors: ['rac-ux-sd'] },
+            { id: 'rac-ux-spec', name: '[UX] Spec', duration: 2, status: 'Não Iniciado', predecessors: ['rac-movida-aprovacao-sd'] },
+            { id: 'rac-bi-doc', name: '[BI] Marcação Documentação', duration: 2, status: 'Não Iniciado', predecessors: ['rac-ux-spec'] },
+            { id: 'rac-qa-planejamento', name: '[QA] Planejamento Modelagem', duration: 2, status: 'Não Iniciado', predecessors: ['rac-bi-doc'] },
+            { id: 'rac-dev', name: '[DEV] Desenvolvimento de Fluxo', duration: 2, status: 'Não Iniciado', predecessors: ['rac-qa-planejamento'] },
+            { id: 'rac-qa-execucao', name: '[QA] Execução de Testes', duration: 2, status: 'Não Iniciado', predecessors: ['rac-dev'] },
+            { id: 'rac-po-certificacao', duration: 1, status: 'Não Iniciado', predecessors: ['rac-qa-execucao'] },
+            { id: 'rac-gmud', duration: 1, status: 'Não Iniciado', predecessors: ['rac-po-certificacao'] },
+          ],
+          progress: 0,
+        },
+        {
+          id: 'bot_cpa_nova_contratacao',
+          name: '[BOT CPA] Nova Contratação + Agendamento',
+          tasks: [
+            { id: 'consolidated_nova_contratacao', name: 'Nova Contratação + Agendamento', duration: 20, status: 'Não Iniciado', predecessors: [], startDate: new Date('2025-10-13T00:00:00') },
+          ],
+          progress: 0,
+        },
+      ];
+
+      // Função para calcular o início, fim e status de um projeto com base em suas tarefas
+      const calculateProjectDetails = (projectData, allProjects) => {
+        let minStartDate = null;
+        let maxEndDate = null;
+        let hasInProgress = false;
+        let hasNotStarted = false;
+
+        const taskCalculatedDates = {};
+
+        const calculateTaskStartDate = (taskId, currentProjectId, tasksSource) => {
+            if (taskCalculatedDates[taskId]) {
+                return taskCalculatedDates[taskId];
+            }
+
+            const task = tasksSource.find(t => t.id === taskId);
+            if (!task) {
+                return timelineStartDateBotSac;
+            }
+
+            if (task.startDate) {
+                const date = new Date(task.startDate);
+                date.setHours(0,0,0,0);
+                taskCalculatedDates[taskId] = date;
+                return date;
+            }
+
+            if (task.predecessors && task.predecessors.length > 0) {
+                let latestPredecessorEndDate = timelineStartDateBotSac;
+                task.predecessors.forEach(predId => {
+                    const predIdParts = predId.split(':');
+                    const predecessorProjectId = predIdParts.length > 1 ? predIdParts[0] : currentProjectId;
+                    const predecessorTaskId = predIdParts.length > 1 ? predIdParts[1] : predIdParts[0];
+
+                    let predTask;
+                    let predTasksForCalc = tasksSource;
+
+                    if (predecessorProjectId === currentProjectId) {
+                        predTask = tasksSource.find(t => t.id === predecessorTaskId);
+                    } else {
+                        const otherProject = allProjects.find(p => p.id === predecessorProjectId);
+                        if (otherProject) {
+                            predTask = otherProject.tasks.find(t => t.id === predecessorTaskId);
+                            predTasksForCalc = otherProject.tasks;
+                        }
+                    }
+
+                    if (predTask) {
+                        const predStartDate = calculateTaskStartDate(predTask.id, predecessorProjectId, predTasksForCalc);
+                        const predEndDate = addBusinessDays(predStartDate, predTask.duration - 1);
+                        if (predEndDate.getTime() > latestPredecessorEndDate.getTime()) {
+                            latestPredecessorEndDate = predEndDate;
+                        }
+                    }
+                });
+                const startDate = addBusinessDays(latestPredecessorEndDate, 1);
+                taskCalculatedDates[taskId] = startDate;
+                return startDate;
+            } else {
+                taskCalculatedDates[taskId] = timelineStartDateBotSac;
+                return timelineStartDateBotSac;
+            }
+        };
+
+        projectData.tasks.forEach(task => calculateTaskStartDate(task.id, projectData.id, projectData.tasks));
+
+        projectData.tasks.forEach(task => {
+          const taskStartDate = taskCalculatedDates[task.id];
+          const taskEndDate = addBusinessDays(taskStartDate, task.duration - 1);
+
+          if (!minStartDate || taskStartDate.getTime() < minStartDate.getTime()) {
+            minStartDate = taskStartDate;
+          }
+          if (!maxEndDate || taskEndDate.getTime() > maxEndDate.getTime()) {
+            maxEndDate = taskEndDate;
+          }
+
+          if (task.status === 'Em Andamento') {
+            hasInProgress = true;
+          }
+          if (task.status === 'Não Iniciado') {
+            hasNotStarted = true;
+          }
+        });
+
+        // Determine project status based on tasks (this part is now overridden by 'progress' for display)
+        let projectStatus = 'Concluída';
+        if (hasInProgress) {
+          projectStatus = 'Em Andamento';
+        } else if (hasNotStarted) {
+          projectStatus = 'Não Iniciado';
+        }
+
+        const duration = minStartDate && maxEndDate ? getBusinessDays(minStartDate, maxEndDate) : 0;
+
+        return {
+          id: projectData.id,
+          name: projectData.name,
+          startDate: minStartDate,
+          endDate: maxEndDate,
+          duration: duration,
+          // Keep the progress from the previous state if available, otherwise default to 0
+          progress: projectData.progress !== undefined ? projectData.progress : 0,
+        };
+      };
+
+      // Estado inicial dos projetos com o progresso, mas as datas serão calculadas
+      const [projects, setProjects] = useState([]);
+      const [editingProject, setEditingProject] = useState(null);
+      const [formState, setFormState] = useState({ progress: 0 });
+      const [projectPositions, setProjectPositions] = useState({});
+
+      // Efeito para calcular as dimensões da linha do tempo com base no tamanho da janela
+      useEffect(() => {
+        const updateTimelineDimensions = () => {
+          const totalBusinessDaysForAxis = getBusinessDays(timelineStartDateBotSac, timelineEndDateHardLimit);
+          const availableWidth = window.innerWidth * 0.95;
+          const timelineDisplayAreaWidth = availableWidth - projectLabelWidth - paddingRight;
+
+          const minDaysPerPixel = 10;
+          let newCalculatedDaysPerPixel = timelineDisplayAreaWidth / totalBusinessDaysForAxis;
+          if (newCalculatedDaysPerPixel < minDaysPerPixel) {
+              newCalculatedDaysPerPixel = minDaysPerPixel;
+          }
+
+          setCalculatedDaysPerPixel(newCalculatedDaysPerPixel);
+          setCalculatedTimelineWidth(totalBusinessDaysForAxis * newCalculatedDaysPerPixel);
+        };
+
+        window.addEventListener('resize', updateTimelineDimensions);
+        updateTimelineDimensions();
+
+        return () => window.removeEventListener('resize', updateTimelineDimensions);
+      }, []);
+
+      // Efeito para calcular os detalhes do projeto (datas) e inicializar o estado dos projetos
+      useEffect(() => {
+        // Mapeia os dados originais para a estrutura simplificada, calculando as datas
+        const calculatedProjects = originalProjectsData.map(p => {
+          const details = calculateProjectDetails(p, originalProjectsData);
+          // Mantém o progresso existente se o projeto já estiver no estado 'projects'
+          const existingProject = projects.find(ep => ep.id === p.id);
+          return { ...details, progress: existingProject ? existingProject.progress : (p.progress !== undefined ? p.progress : 0) };
+        });
+        setProjects(calculatedProjects);
+      }, [calculatedDaysPerPixel]); // Recalcula se daysPerPixel mudar (para garantir que a duração seja precisa)
+
+      // Efeito para calcular as posições dos projetos na linha do tempo
+      useEffect(() => {
+        const positions = {};
+        projects.forEach(project => {
+          if (project.startDate && project.endDate) {
+            const referenceDate = timelineStartDateBotSac;
+            const businessDaysFromStart = getBusinessDays(referenceDate, project.startDate);
+            const left = (businessDaysFromStart - 1) * calculatedDaysPerPixel;
+            const duration = getBusinessDays(project.startDate, project.endDate);
+            const width = duration * calculatedDaysPerPixel;
+            positions[project.id] = { left, width, startDate: project.startDate, endDate: project.endDate, duration };
+          }
+        });
+        setProjectPositions(positions);
+      }, [projects, calculatedDaysPerPixel]);
+
+      // Função para determinar a cor do projeto com base no progresso
+      const getProjectColor = (progress) => {
+        const p = Math.max(0, Math.min(100, progress)); // Garante que o progresso esteja entre 0 e 100
+        if (p === 100) {
+          return 'bg-green-500'; // Concluída
+        }
+        if (p === 0) {
+          return 'bg-gray-400'; // Não Iniciado
+        }
+        if (p === 50) {
+          return 'bg-blue-500'; // Em Andamento
+        }
+
+        // Interpolação para cores graduais
+        if (p < 50) {
+          // De cinza-400 para azul-500
+          const grayRGB = [156, 163, 175]; // RGB de Tailwind gray-400
+          const blueRGB = [59, 130, 246]; // RGB de Tailwind blue-500
+          const ratio = p / 50; // Proporção do progresso em relação a 50%
+          const r = Math.round(grayRGB[0] + (blueRGB[0] - grayRGB[0]) * ratio);
+          const g = Math.round(grayRGB[1] + (blueRGB[1] - grayRGB[1]) * ratio);
+          const b = Math.round(grayRGB[2] + (blueRGB[2] - grayRGB[2]) * ratio);
+          return `bg-[rgb(${r},${g},${b})]`;
+        }
+        if (p > 50) {
+          // De azul-500 para verde-500
+          const blueRGB = [59, 130, 246]; // RGB de Tailwind blue-500
+          const greenRGB = [34, 197, 94]; // RGB de Tailwind green-500
+          const ratio = (p - 50) / 50; // Proporção do progresso em relação aos 50% restantes
+          const r = Math.round(blueRGB[0] + (greenRGB[0] - blueRGB[0]) * ratio);
+          const g = Math.round(blueRGB[1] + (greenRGB[1] - blueRGB[1]) * ratio);
+          const b = Math.round(blueRGB[2] + (greenRGB[2] - blueRGB[2]) * ratio);
+          return `bg-[rgb(${r},${g},${b})]`;
+        }
+      };
+
+      // Função para determinar o status do projeto com base no progresso (não usado para cor, mas pode ser útil)
+      const getProjectStatus = (progress) => {
+        if (progress === 100) return 'Concluída';
+        if (progress > 0 && progress < 100) return 'Em Andamento';
+        return 'Não Iniciado';
+      };
+
+      // Lida com a edição de um projeto
+      const handleEditProject = (projectId) => {
+        const project = projects.find(p => p.id === projectId);
+        setEditingProject(project);
+        setFormState({
+          progress: project.progress,
+        });
+      };
+
+      // Lida com o salvamento das edições do projeto
+      const handleSaveEdit = (e) => {
+        e.preventDefault();
+        setProjects(prevProjects =>
+          prevProjects.map(project =>
+            project.id === editingProject.id
+              ? { ...project, progress: parseInt(formState.progress, 10) } // Atualiza o progresso
+              : project
+          )
+        );
+        setEditingProject(null);
+      };
+
+      // Gera as datas para a linha do tempo (a cada segunda-feira)
+      const getTimelineDates = () => {
+        const dates = [];
+        let currentDate = new Date(timelineStartDateBotSac);
+        currentDate.setHours(0,0,0,0);
+
+        while(currentDate <= timelineEndDateHardLimit) {
+          if (currentDate.getDay() === 1) { // Marca toda segunda-feira
+            dates.push(new Date(currentDate));
+          }
+          currentDate.setDate(currentDate.getDate() + 1);
+        }
+        return dates;
+      };
+
+      return (
+        <div className="bg-gray-50 flex items-center justify-center p-8 min-h-screen">
+          <div className="bg-white p-8 rounded-2xl shadow-xl w-full">
+            <h1 className="text-3xl font-bold text-center text-gray-800 mb-6">Plano de Ação de Retenção</h1>
+            
+            {/* Legenda de cores */}
+            <div className="flex justify-end space-x-4 mb-4">
+              <div className="flex items-center">
+                <div className="w-4 h-4 rounded-full bg-green-500 mr-2"></div>
+                <span className="text-sm text-gray-600">Concluída (100%)</span>
+              </div>
+              <div className="flex items-center">
+                <div className="w-4 h-4 rounded-full bg-blue-500 mr-2"></div>
+                <span className="text-sm text-gray-600">Em Andamento (50%)</span>
+              </div>
+              <div className="flex items-center">
+                <div className="w-4 h-4 rounded-full bg-gray-400 mr-2"></div>
+                <span className="text-sm text-gray-600">Não Iniciado (0%)</span>
+              </div>
+            </div>
+
+            {/* Container da linha do tempo e projetos */}
+            <div className="relative pb-6" style={{ width: `${calculatedTimelineWidth + projectLabelWidth + paddingRight}px` }}>
+              {/* Eixo da linha do tempo */}
+              <div className="flex items-center text-xs text-gray-500 mb-4 ml-[64px] relative">
+                <div className="relative" style={{ width: `${calculatedTimelineWidth}px` }}>
+                  <div className="absolute inset-y-0 left-0 right-0 h-1 bg-gray-200 z-0 top-1/2 -translate-y-1/2"></div>
+                  <div className="flex justify-between relative z-10">
+                    {getTimelineDates().map((date, index) => (
+                      <div key={index} className="text-center absolute" style={{ left: `${(getBusinessDays(timelineStartDateBotSac, date) - 1) * calculatedDaysPerPixel}px` }}>
+                        <div className="relative">
+                          {formatDate(date)}
+                          <div className="absolute bottom-[-1.5rem] left-1/2 -translate-x-1/2 h-10 w-px bg-gray-300"></div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Renderização dos projetos */}
+              {projects.map(project => {
+                const { left, width, startDate, endDate } = projectPositions[project.id] || {};
+                if (!left) return null;
+                const progressColor = getProjectColor(project.progress);
+                
+                return (
+                  <div key={project.id} className="flex items-center mb-6">
+                    <div className="w-16 flex-shrink-0 text-sm font-semibold text-gray-700" style={{ width: `${projectLabelWidth}px` }}>{project.name}</div>
+                    <div className="relative h-16" style={{ width: `${calculatedTimelineWidth}px` }}>
+                      <div
+                        className={`absolute top-1/2 -translate-y-1/2 ${progressColor} h-14 rounded-md flex items-center text-sm text-white font-semibold shadow cursor-pointer transition-all duration-300 hover:scale-105`}
+                        style={{ left: `${left}px`, width: `${width}px` }}
+                        onClick={() => handleEditProject(project.id)}
+                        title={`${project.name} (${formatDate(startDate)} a ${formatDate(endDate)}) - Duração: ${project.duration} dias úteis`}
+                      >
+                        <div className="flex-1 text-center font-bold">{project.progress}%</div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Modal de edição do projeto */}
+            {editingProject && (
+              <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4">
+                <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-sm">
+                  <h2 className="text-lg font-bold mb-4">Editar Progresso: {editingProject.name}</h2>
+                  <form onSubmit={handleSaveEdit}>
+                    <div className="mb-4">
+                      <label htmlFor="progress-input" className="block text-sm font-medium text-gray-700">Progresso (%)</label>
+                      <input
+                        id="progress-input"
+                        type="number"
+                        value={formState.progress}
+                        onChange={(e) => setFormState({ ...formState, progress: e.target.value })}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                        min="0"
+                        max="100"
+                      />
+                    </div>
+                    <div className="flex justify-end space-x-2">
+                      <button
+                        type="button"
+                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors"
+                        onClick={() => setEditingProject(null)}
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        type="submit"
+                        className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
+                      >
+                        Salvar
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    };
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(React.createElement(App));
+  </script>
+</body>
+</html>
