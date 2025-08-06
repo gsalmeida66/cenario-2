@@ -30,7 +30,7 @@
   <script type="text/babel">
     const { useState, useEffect } = React;
 
-    // Função auxiliar para calcular o número de dias úteis entre duas datas
+    // Helper function to calculate the number of business days between two dates
     const getBusinessDays = (startDate, endDate) => {
       let count = 0;
       const currentDate = new Date(startDate);
@@ -40,7 +40,7 @@
 
       while (currentDate <= end) {
         const dayOfWeek = currentDate.getDay();
-        if (dayOfWeek !== 0 && dayOfWeek !== 6) { // 0 = Domingo, 6 = Sábado
+        if (dayOfWeek !== 0 && dayOfWeek !== 6) { // 0 = Sunday, 6 = Saturday
           count++;
         }
         currentDate.setDate(currentDate.getDate() + 1);
@@ -62,7 +62,7 @@
       return result;
     };
 
-    // Função auxiliar para formatar a data
+    // Helper function to format the date for display
     const formatDate = (date) => {
       if (!date) return '';
       const d = new Date(date);
@@ -79,7 +79,7 @@
       const [calculatedDaysPerPixel, setCalculatedDaysPerPixel] = useState(40);
       const [calculatedTimelineWidth, setCalculatedTimelineWidth] = useState(3000);
 
-      // Dados originais dos projetos com tarefas, copiados de teste.html
+      // Original project data with tasks, copied from teste.html
       const originalProjectsData = [
         {
           id: 'bot_sac',
@@ -87,7 +87,7 @@
           tasks: [
             { id: 'consolidated_bot_sac', name: 'BOT SAC (Menu ACOA)', duration: getBusinessDays(new Date('2025-06-13T00:00:00'), new Date('2025-08-12T00:00:00')), status: 'Em Andamento', predecessors: [], startDate: new Date('2025-06-13T00:00:00') },
           ],
-          progress: 91, // Progresso atualizado
+          progress: 91,
         },
         {
           id: 'bot_cpa',
@@ -106,7 +106,7 @@
             { id: 'cpa-9', name: 'PO - Certificação', duration: 1, status: 'Não Iniciado', predecessors: ['cpa-8'] },
             { id: 'cpa-10', name: 'GMUD', duration: 1, status: 'Não Iniciado', predecessors: ['cpa-9'] },
           ],
-          progress: 10, // Progresso atualizado
+          progress: 10,
         },
         {
           id: 'ura_reservas',
@@ -125,7 +125,7 @@
             { id: '191', name: 'PO - Certificação', duration: 1, status: 'Não Iniciado', predecessors: ['190'] },
             { id: '192', name: 'GMUD', duration: 1, status: 'Não Iniciado', predecessors: ['191'] },
           ],
-          progress: 10, // Progresso atualizado
+          progress: 10,
         },
         {
           id: 'ura_nova_reserva',
@@ -144,7 +144,7 @@
             { id: 'e2-9', name: '[PO] Certificação', duration: 1, status: 'Não Iniciado', predecessors: ['e2-8'] },
             { id: 'e2-10', name: 'GMUD', duration: 1, status: 'Não Iniciado', predecessors: ['e2-9'] },
           ],
-          progress: 10, // Progresso atualizado
+          progress: 10,
         },
         {
           id: 'bot_rac',
@@ -169,14 +169,14 @@
           id: 'bot_cpa_nova_contratacao',
           name: '[BOT CPA] Nova Contratação + Agendamento',
           tasks: [
-            // Duração atualizada para 24 dias úteis
-            { id: 'consolidated_nova_contratacao', name: 'Nova Contratação + Agendamento', duration: 24, status: 'Não Iniciado', predecessors: [], startDate: new Date('2025-10-13T00:00:00') },
+            // Duração ajustada de volta para 20 dias úteis (conforme crono-v1)
+            { id: 'consolidated_nova_contratacao', name: 'Nova Contratação + Agendamento', duration: 20, status: 'Não Iniciado', predecessors: [], startDate: new Date('2025-10-13T00:00:00') },
           ],
           progress: 0,
         },
       ];
 
-      // Função para calcular o início, fim e status de um projeto com base em suas tarefas
+      // Function to calculate start, end, and status for a project based on its tasks
       const calculateProjectDetails = (projectData, allProjects) => {
         let minStartDate = null;
         let maxEndDate = null;
@@ -260,7 +260,6 @@
           }
         });
 
-        // Determine project status based on tasks (this part is now overridden by 'progress' for display)
         let projectStatus = 'Concluída';
         if (hasInProgress) {
           projectStatus = 'Em Andamento';
@@ -276,18 +275,16 @@
           startDate: minStartDate,
           endDate: maxEndDate,
           duration: duration,
-          // Keep the progress from the previous state if available, otherwise default to 0
           progress: projectData.progress !== undefined ? projectData.progress : 0,
         };
       };
 
-      // Estado inicial dos projetos com o progresso, mas as datas serão calculadas
       const [projects, setProjects] = useState([]);
       const [editingProject, setEditingProject] = useState(null);
       const [formState, setFormState] = useState({ progress: 0 });
       const [projectPositions, setProjectPositions] = useState({});
 
-      // Efeito para calcular as dimensões da linha do tempo com base no tamanho da janela
+      // Effect to update timeline dimensions based on window size
       useEffect(() => {
         const updateTimelineDimensions = () => {
           const totalBusinessDaysForAxis = getBusinessDays(timelineStartDateBotSac, timelineEndDateHardLimit);
@@ -310,19 +307,17 @@
         return () => window.removeEventListener('resize', updateTimelineDimensions);
       }, []);
 
-      // Efeito para calcular os detalhes do projeto (datas) e inicializar o estado dos projetos
+      // Effect to calculate project details (dates) and initialize project state
       useEffect(() => {
-        // Mapeia os dados originais para a estrutura simplificada, calculando as datas
         const calculatedProjects = originalProjectsData.map(p => {
           const details = calculateProjectDetails(p, originalProjectsData);
-          // Mantém o progresso existente se o projeto já estiver no estado 'projects'
           const existingProject = projects.find(ep => ep.id === p.id);
           return { ...details, progress: existingProject ? existingProject.progress : (p.progress !== undefined ? p.progress : 0) };
         });
         setProjects(calculatedProjects);
-      }, [calculatedDaysPerPixel]); // Recalcula se daysPerPixel mudar (para garantir que a duração seja precisa)
+      }, [calculatedDaysPerPixel]);
 
-      // Efeito para calcular as posições dos projetos na linha do tempo
+      // Effect to calculate project positions on the timeline
       useEffect(() => {
         const positions = {};
         projects.forEach(project => {
@@ -338,35 +333,32 @@
         setProjectPositions(positions);
       }, [projects, calculatedDaysPerPixel]);
 
-      // Função para determinar a cor do projeto com base no progresso
+      // Function to determine project color based on progress
       const getProjectColor = (progress) => {
-        const p = Math.max(0, Math.min(100, progress)); // Garante que o progresso esteja entre 0 e 100
+        const p = Math.max(0, Math.min(100, progress));
         if (p === 100) {
-          return 'bg-green-500'; // Concluída
+          return 'bg-green-500';
         }
         if (p === 0) {
-          return 'bg-gray-400'; // Não Iniciado
+          return 'bg-gray-400';
         }
         if (p === 50) {
-          return 'bg-blue-500'; // Em Andamento
+          return 'bg-blue-500';
         }
 
-        // Interpolação para cores graduais
         if (p < 50) {
-          // De cinza-400 para azul-500
-          const grayRGB = [156, 163, 175]; // RGB de Tailwind gray-400
-          const blueRGB = [59, 130, 246]; // RGB de Tailwind blue-500
-          const ratio = p / 50; // Proporção do progresso em relação a 50%
+          const grayRGB = [156, 163, 175];
+          const blueRGB = [59, 130, 246];
+          const ratio = p / 50;
           const r = Math.round(grayRGB[0] + (blueRGB[0] - grayRGB[0]) * ratio);
           const g = Math.round(grayRGB[1] + (blueRGB[1] - grayRGB[1]) * ratio);
           const b = Math.round(grayRGB[2] + (blueRGB[2] - grayRGB[2]) * ratio);
           return `bg-[rgb(${r},${g},${b})]`;
         }
         if (p > 50) {
-          // De azul-500 para verde-500
-          const blueRGB = [59, 130, 246]; // RGB de Tailwind blue-500
-          const greenRGB = [34, 197, 94]; // RGB de Tailwind green-500
-          const ratio = (p - 50) / 50; // Proporção do progresso em relação aos 50% restantes
+          const blueRGB = [59, 130, 246];
+          const greenRGB = [34, 197, 94];
+          const ratio = (p - 50) / 50;
           const r = Math.round(blueRGB[0] + (greenRGB[0] - blueRGB[0]) * ratio);
           const g = Math.round(blueRGB[1] + (greenRGB[1] - blueRGB[1]) * ratio);
           const b = Math.round(blueRGB[2] + (greenRGB[2] - blueRGB[2]) * ratio);
@@ -374,14 +366,7 @@
         }
       };
 
-      // Função para determinar o status do projeto com base no progresso (não usado para cor, mas pode ser útil)
-      const getProjectStatus = (progress) => {
-        if (progress === 100) return 'Concluída';
-        if (progress > 0 && progress < 100) return 'Em Andamento';
-        return 'Não Iniciado';
-      };
-
-      // Lida com a edição de um projeto
+      // Handles project editing
       const handleEditProject = (projectId) => {
         const project = projects.find(p => p.id === projectId);
         setEditingProject(project);
@@ -390,40 +375,66 @@
         });
       };
 
-      // Lida com o salvamento das edições do projeto
+      // Handles saving project edits
       const handleSaveEdit = (e) => {
         e.preventDefault();
         setProjects(prevProjects =>
           prevProjects.map(project =>
             project.id === editingProject.id
-              ? { ...project, progress: parseInt(formState.progress, 10) } // Atualiza o progresso
+              ? { ...project, progress: parseInt(formState.progress, 10) }
               : project
           )
         );
         setEditingProject(null);
       };
 
-      // Gera as datas para a linha do tempo (a cada segunda-feira)
-      const getTimelineDates = () => {
-        const dates = [];
+      // Generates dates for the timeline (every Monday) and groups them by month
+      const getTimelineMonthsAndDays = () => {
+        const months = {};
         let currentDate = new Date(timelineStartDateBotSac);
         currentDate.setHours(0,0,0,0);
 
         while(currentDate <= timelineEndDateHardLimit) {
-          if (currentDate.getDay() === 1) { // Marca toda segunda-feira
-            dates.push(new Date(currentDate));
+          if (currentDate.getDay() === 1) { // Mark every Monday
+            const monthName = currentDate.toLocaleString('pt-BR', { month: 'long' });
+            const year = currentDate.getFullYear();
+            const monthKey = `${monthName}-${year}`;
+
+            if (!months[monthKey]) {
+              months[monthKey] = {
+                name: monthName.charAt(0).toUpperCase() + monthName.slice(1),
+                days: [],
+                startPx: -1,
+                endPx: -1,
+              };
+            }
+            const dayPosition = (getBusinessDays(timelineStartDateBotSac, currentDate) - 1) * calculatedDaysPerPixel;
+            months[monthKey].days.push({
+              date: new Date(currentDate),
+              dayOfMonth: currentDate.getDate(),
+              position: dayPosition,
+            });
+
+            if (months[monthKey].startPx === -1 || dayPosition < months[monthKey].startPx) {
+              months[monthKey].startPx = dayPosition;
+            }
+            if (dayPosition > months[monthKey].endPx) {
+              months[monthKey].endPx = dayPosition;
+            }
           }
           currentDate.setDate(currentDate.getDate() + 1);
         }
-        return dates;
+        return Object.values(months);
       };
+
+      const timelineMonths = getTimelineMonthsAndDays();
 
       return (
         <div className="bg-gray-50 flex items-center justify-center p-8 min-h-screen">
           <div className="bg-white p-8 rounded-2xl shadow-xl w-full">
             <h1 className="text-3xl font-bold text-center text-gray-800 mb-6">Plano de Ação de Retenção</h1>
             
-            {/* Legenda de cores */}
+            {/* Color legend */}
             <div className="flex justify-end space-x-4 mb-4">
               <div className="flex items-center">
                 <div className="w-4 h-4 rounded-full bg-green-500 mr-2"></div>
@@ -439,26 +450,46 @@
               </div>
             </div>
 
-            {/* Container da linha do tempo e projetos */}
+            {/* Timeline and projects container */}
             <div className="relative pb-6" style={{ width: `${calculatedTimelineWidth + projectLabelWidth + paddingRight}px` }}>
-              {/* Eixo da linha do tempo */}
-              <div className="flex items-center text-xs text-gray-500 mb-4 ml-[64px] relative">
-                <div className="relative" style={{ width: `${calculatedTimelineWidth}px` }}>
+              {/* X-axis: Months and Days */}
+              <div className="flex flex-col mb-4 ml-[64px] relative" style={{ width: `${calculatedTimelineWidth}px` }}>
+                {/* Month Headers */}
+                <div className="flex relative h-8">
+                  {timelineMonths.map((month, index) => (
+                    <div
+                      key={index}
+                      className="absolute text-center font-bold text-gray-700 text-sm"
+                      style={{
+                        left: `${month.startPx}px`,
+                        width: `${month.endPx - month.startPx + calculatedDaysPerPixel}px`, // Adjust width to cover all days
+                      }}
+                    >
+                      {month.name}
+                    </div>
+                  ))}
+                </div>
+                {/* Day Numbers */}
+                <div className="relative h-8">
                   <div className="absolute inset-y-0 left-0 right-0 h-1 bg-gray-200 z-0 top-1/2 -translate-y-1/2"></div>
-                  <div className="flex justify-between relative z-10">
-                    {getTimelineDates().map((date, index) => (
-                      <div key={index} className="text-center absolute" style={{ left: `${(getBusinessDays(timelineStartDateBotSac, date) - 1) * calculatedDaysPerPixel}px` }}>
-                        <div className="relative">
-                          {formatDate(date)}
-                          <div className="absolute bottom-[-1.5rem] left-1/2 -translate-x-1/2 h-10 w-px bg-gray-300"></div>
+                  {timelineMonths.map((month) => (
+                    <React.Fragment key={month.name}>
+                      {month.days.map((day, dayIndex) => (
+                        <div
+                          key={`${month.name}-${day.dayOfMonth}`}
+                          className="absolute text-center text-xs text-gray-500"
+                          style={{ left: `${day.position}px` }}
+                        >
+                          {day.dayOfMonth}
+                          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 h-10 w-px bg-gray-300"></div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </React.Fragment>
+                  ))}
                 </div>
               </div>
 
-              {/* Renderização dos projetos */}
+              {/* Project rendering */}
               {projects.map(project => {
                 const { left, width, startDate, endDate } = projectPositions[project.id] || {};
                 if (!left) return null;
@@ -482,7 +513,7 @@
               })}
             </div>
 
-            {/* Modal de edição do projeto */}
+            {/* Project editing modal */}
             {editingProject && (
               <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4">
                 <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-sm">
