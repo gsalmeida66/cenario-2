@@ -88,28 +88,9 @@
           id: 'bot_sac',
           name: '[BOT SAC] Menu ACOA',
           tasks: [
-            { id: 'consolidated_bot_sac', name: 'BOT SAC (Menu ACOA)', duration: getBusinessDays(new Date('2025-06-13T00:00:00'), new Date('2025-09-02T00:00:00')), status: 'Em Andamento', predecessors: [], startDate: new Date('2025-06-13T00:00:00') },
+            { id: 'consolidated_bot_sac', name: 'BOT SAC (Menu ACOA)', duration: getBusinessDays(new Date('2025-06-13T00:00:00'), new Date('2025-09-052T00:00:00')), status: 'Em Andamento', predecessors: [], startDate: new Date('2025-06-13T00:00:00') },
           ],
           progress: 92,
-        },
-        {
-          id: 'bot_cpa',
-          name: '[Bot CPA]',
-          tasks: [
-            { id: 'hld-cpa', name: 'HLD', duration: 12, status: 'Concluída', predecessors: [], startDate: new Date('2025-08-08T00:00:00') },
-            { id: 'aprovacao-hld-cpa', name: '[Movida] Aprovação HLD', duration: 4, status: 'Concluída', predecessors: ['hld-cpa'] },
-            { id: 'cpa-1', name: 'Escopo', duration: 2, status: 'Não Iniciado', predecessors: ['aprovacao-hld-cpa'] },
-            { id: 'cpa-3', name: 'UX - SD', duration: 2, status: 'Não Iniciado', predecessors: ['cpa-1'] },
-            { id: 'cpa-4', name: 'Movida - Aprovação SD', duration: 2, status: 'Não Iniciado', predecessors: ['cpa-3'] },
-            { id: 'cpa-2', name: 'UX - Spec', duration: 2, status: 'Não Iniciado', predecessors: ['cpa-4'] },
-            { id: 'cpa-5', name: 'BI - Marcação Documentação', duration: 2, status: 'Não Iniciado', predecessors: ['cpa-2'] },
-            { id: 'cpa-7', name: 'QA - Planejamento Modelagem', duration: 2, status: 'Não Iniciado', predecessors: ['cpa-5'] },
-            { id: 'cpa-6', name: 'DEV - Desenvolvimento de Fluxo', duration: 2, status: 'Não Iniciado', predecessors: ['cpa-7'] },
-            { id: 'cpa-8', name: 'QA - Execução de Testes', duration: 2, status: 'Não Iniciado', predecessors: ['cpa-6'] },
-            { id: 'cpa-9', name: 'PO - Certificação', duration: 1, status: 'Não Iniciado', predecessors: ['cpa-8'] },
-            { id: 'cpa-10', name: 'GMUD', duration: 1, status: 'Não Iniciado', predecessors: ['cpa-9'] },
-          ],
-          progress: 12,
         },
         {
           id: 'ura_reservas',
@@ -148,6 +129,25 @@
             { id: 'e2-10', name: 'GMUD', duration: 1, status: 'Não Iniciado', predecessors: ['e2-9'] },
           ],
           progress: 10,
+        },
+         {
+          id: 'bot_cpa',
+          name: '[Bot CPA]',
+          tasks: [
+            { id: 'hld-cpa', name: 'HLD', duration: 12, status: 'Concluída', predecessors: [], startDate: new Date('2025-08-08T00:00:00') },
+            { id: 'aprovacao-hld-cpa', name: '[Movida] Aprovação HLD', duration: 4, status: 'Concluída', predecessors: ['hld-cpa'] },
+            { id: 'cpa-1', name: 'Escopo', duration: 2, status: 'Não Iniciado', predecessors: ['aprovacao-hld-cpa'] },
+            { id: 'cpa-3', name: 'UX - SD', duration: 2, status: 'Não Iniciado', predecessors: ['cpa-1'] },
+            { id: 'cpa-4', name: 'Movida - Aprovação SD', duration: 2, status: 'Não Iniciado', predecessors: ['cpa-3'] },
+            { id: 'cpa-2', name: 'UX - Spec', duration: 2, status: 'Não Iniciado', predecessors: ['cpa-4'] },
+            { id: 'cpa-5', name: 'BI - Marcação Documentação', duration: 2, status: 'Não Iniciado', predecessors: ['cpa-2'] },
+            { id: 'cpa-7', name: 'QA - Planejamento Modelagem', duration: 2, status: 'Não Iniciado', predecessors: ['cpa-5'] },
+            { id: 'cpa-6', name: 'DEV - Desenvolvimento de Fluxo', duration: 2, status: 'Não Iniciado', predecessors: ['cpa-7'] },
+            { id: 'cpa-8', name: 'QA - Execução de Testes', duration: 2, status: 'Não Iniciado', predecessors: ['cpa-6'] },
+            { id: 'cpa-9', name: 'PO - Certificação', duration: 1, status: 'Não Iniciado', predecessors: ['cpa-8'] },
+            { id: 'cpa-10', name: 'GMUD', duration: 1, status: 'Não Iniciado', predecessors: ['cpa-9'] },
+          ],
+          progress: 12,
         },
         {
           id: 'bot_rac',
@@ -612,6 +612,7 @@
   </script>
 </body>
 </html>
+
 
 
 
