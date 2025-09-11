@@ -96,7 +96,7 @@
           id: 'ura_reservas',
           name: '[URA Reservas] Info Loja + ACOA',
           tasks: [
-            { id: 'hld-ura', name: 'HLD', duration: 2, status: 'Não Iniciado', predecessors: ['bot_cpa:cpa-2'] },
+            { id: 'hld-ura', name: 'HLD', duration: 2, status: 'Não Iniciado', predecessors: ['bot_cpa:cpa-2'] }, startDate: new Date('2025-08-12T00:00:00') },
             { id: 'aprovacao-hld-ura', name: '[Movida] Aprovação HLD', duration: 4, status: 'Não Iniciado', predecessors: ['hld-ura'] },
             { id: '183', name: 'Escopo', duration: 2, status: 'Não Iniciado', predecessors: ['aprovacao-hld-ura'] },
             { id: '184', name: 'UX - SD', duration: 2, status: 'Não Iniciado', predecessors: ['183'] },
@@ -612,6 +612,7 @@
   </script>
 </body>
 </html>
+
 
 
 
